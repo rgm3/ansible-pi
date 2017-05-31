@@ -1,0 +1,79 @@
+#!/usr/bin/env ansible-playbook
+---
+- hosts: all
+  gather_facts: yes
+  become: yes
+
+  vars_file: secrets.yml
+  vars:
+    locale: "en_US.UTF-8"
+    timezone: "US/Central"
+    packages_to_install:
+      - apt-file
+      - [ python-augeas, augeas-tools ]
+      - bpython
+      - silversearcher-ag
+      - git
+      - htop
+      - iotop
+      - mlocate
+      - mosh
+      - pigpio
+      - python-pigpio
+      - python-rpi.gpio
+      - screen
+      - ssh-askpass
+      - tmux
+      - vim
+      - wiringpi
+
+    pip_packages_to_install: [] # awscli ]
+    npm_packages_to_install: [] # mqtt, crypto-js, minimist, websocket-stream ]
+    update_cache: no
+
+  tasks:
+    - name: put wifi config in place
+      template: src=templates/wpa_supplicant.conf.j2 dest=/etc/wpa_supplicant/wpa_supplicant.conf
+      notify: reboot
+      when: false
+
+      #- name: install python-apt
+      #command: apt-get install python-apt
+      #register: aptget
+      #changed_when: "'python-apt is already the newest version.' not in aptget.stdout_lines"
+
+      #- name: add node repo
+      #command: "/bin/bash -c 'curl -sLS https://apt.adafruit.com/add | sudo bash'"
+      #register: add
+      #changed_when:
+      #    - debug: var=add
+
+    - name: install ubuntu packages
+      apt: pkg={{ item }} state=installed update_cache={{ update_cache }}
+      with_items: "{{ packages_to_install }}"
+  
+    - name: install python modules with pip
+      pip: name={{ item }}
+      with_items: "{{ pip_packages_to_install }}"
+   
+    - name: install node.js packages with npm
+      npm: name={{ item }} global=yes
+      with_items: "{{ npm_packages_to_install }}"
+
+      #    - name: install amazon iot device sdk
+      #git: repo=https://github.com/aws/aws-iot-device-sdk-js.git dest=/home/pi/aws-iot-device-sdk-js
+      #
+    - include: locale.yml
+
+    - include: dotfiles.yml
+
+    - name: generate ssh keys
+      user: name=pi generate_ssh_key=yes
+      tags: net, ssh
+      
+  handlers:
+    - name: reboot
+      command: shutdown -r now "Ansible updates triggered"
+      async: 0
+      poll: 0
+      ignore_errors: true

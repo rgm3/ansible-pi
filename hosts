@@ -1,0 +1,9 @@
+[raspbian]
+raspberrypi.local
+
+
+[all:vars]
+ansible_connection=ssh 
+ansible_ssh_user=pi
+ansible_ssh_pass=raspberry
+host_key_checking=false

@@ -1,0 +1,28 @@
+---
+# Locale tasks
+
+- name: locale.gen file
+  lineinfile:
+    dest: /etc/locale.gen
+    line: "{{ locale }} UTF-8"
+    regexp: "^# {{ locale }} UTF-8"
+    state: present
+  register: gen_locale
+  when: ansible_env.LANG != locale
+
+- name: generate locale {{ locale }}
+  command: locale-gen {{ locale }}
+  when: gen_locale|changed
+
+- name: update-locale
+  command: update-locale LANG={{ locale }}
+  when: ansible_env.LANG != locale
+
+- name: check timezone
+  command: cat /etc/timezone
+  register: current_tz
+  changed_when: false
+
+- name: timezone {{ timezone }}
+  command: timedatectl set-timezone {{ timezone }}
+  when: current_tz.stdout != timezone

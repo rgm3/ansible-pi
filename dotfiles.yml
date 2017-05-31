@@ -1,0 +1,12 @@
+---
+# Tasks for dotfiles
+- name: aliases
+  become: false
+  copy: dest=/home/pi/.bash_aliases src=bash_aliases
+
+- name: inputrc
+  become: false
+  lineinfile:
+    dest: /home/pi/.inputrc
+    line: 'set completion-ignore-case on'
+    regexp: '^set completion-ignore-case'
