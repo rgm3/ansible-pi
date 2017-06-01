@@ -8,5 +8,8 @@
   become: false
   lineinfile:
     dest: /home/pi/.inputrc
+    state: present
+    create: true
+    owner: pi
     line: 'set completion-ignore-case on'
     regexp: '^set completion-ignore-case'

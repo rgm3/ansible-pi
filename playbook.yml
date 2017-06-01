@@ -4,7 +4,8 @@
   gather_facts: yes
   become: yes
 
-  vars_file: secrets.yml
+  vars_files:
+    - secrets.yml
   vars:
     locale: "en_US.UTF-8"
     timezone: "US/Central"
