@@ -11,9 +11,8 @@
     timezone: "US/Central"
     packages_to_install:
       - apt-file
-      - [ python-augeas, augeas-tools ]
+      - augeas-tools
       - bpython
-      - silversearcher-ag
       - git
       - htop
       - iotop
@@ -23,13 +22,11 @@
       - python-pigpio
       - python-rpi.gpio
       - screen
+      - silversearcher-ag
       - ssh-askpass
       - tmux
       - vim
-      - wiringpi
 
-    pip_packages_to_install: [] # awscli ]
-    npm_packages_to_install: [] # mqtt, crypto-js, minimist, websocket-stream ]
     update_cache: no
 
   tasks:
@@ -38,43 +35,21 @@
       notify: reboot
       when: false
 
-      #- name: install python-apt
-      #command: apt-get install python-apt
-      #register: aptget
-      #changed_when: "'python-apt is already the newest version.' not in aptget.stdout_lines"
+    - name: install raspbian packages
+      apt: pkg={{ packages_to_install }} state=present update_cache={{ update_cache }}
 
-      #- name: add node repo
-      #command: "/bin/bash -c 'curl -sLS https://apt.adafruit.com/add | sudo bash'"
-      #register: add
-      #changed_when:
-      #    - debug: var=add
+    - import_tasks: locale.yml
 
-    - name: install ubuntu packages
-      apt: pkg={{ item }} state=installed update_cache={{ update_cache }}
-      with_items: "{{ packages_to_install }}"
-  
-    - name: install python modules with pip
-      pip: name={{ item }}
-      with_items: "{{ pip_packages_to_install }}"
-   
-    - name: install node.js packages with npm
-      npm: name={{ item }} global=yes
-      with_items: "{{ npm_packages_to_install }}"
-
-      #    - name: install amazon iot device sdk
-      #git: repo=https://github.com/aws/aws-iot-device-sdk-js.git dest=/home/pi/aws-iot-device-sdk-js
-      #
-    - include: locale.yml
-
-    - include: dotfiles.yml
+    - import_tasks: dotfiles.yml
 
     - name: generate ssh keys
       user: name=pi generate_ssh_key=yes
       tags: net, ssh
-      
+
   handlers:
     - name: reboot
       command: shutdown -r now "Ansible updates triggered"
       async: 0
       poll: 0
       ignore_errors: true
+

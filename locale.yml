@@ -10,9 +10,10 @@
   register: gen_locale
   when: ansible_env.LANG != locale
 
-- name: generate locale {{ locale }}
+# generate locale immediately (not as a handler)
+- name: regen locale
   command: locale-gen {{ locale }}
-  when: gen_locale|changed
+  when: gen_locale is changed
 
 - name: update-locale
   command: update-locale LANG={{ locale }}
