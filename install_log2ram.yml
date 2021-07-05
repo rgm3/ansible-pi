@@ -9,20 +9,22 @@
   gather_subset: min
   become: true
 
+
   vars:
     apt_keyring_file: azlux.fr.log2ram.gpg
     apt_sources_file: log2ram.list
 
-    log2ram_size: 48M
+    log2ram_size: 32M
     log2ram_use_rsync: true
     log2ram_path_disk: /var/log
     log2ram_use_z2lr: true
     log2ram_comp_alg: lz4
-    log2ram_log_disk_size: 100M
+    log2ram_log_disk_size: 64M
+
 
   tasks:
     - name: "Add /etc/apt/sources.list.d/{{ apt_sources_file }}"
-      ansible.builtin.copy:
+      copy:
         content: "deb http://packages.azlux.fr/debian/ {{ ansible_facts['distribution_release'] }} main\n"
         dest: /etc/apt/sources.list.d/{{ apt_sources_file }}
         mode: 0644
@@ -30,31 +32,32 @@
       register: source_list
 
     - name: Import apt key
-      ansible.builtin.apt_key:
+      apt_key:
         url: https://azlux.fr/repo.gpg.key
         id: 98B824A5FA7D3A10FDB225B7CA548A0A0312D8E6
         keyring: /etc/apt/trusted.gpg.d/{{ apt_keyring_file }}
       register: dl_key
 
     - name: Remove tilde backup file {{ apt_keyring_file }}~
-      ansible.builtin.file:
+      file:
         path: /etc/apt/trusted.gpg.d/{{ apt_keyring_file }}~
         state: absent
 
     - name: update apt cache
-      ansible.builtin.apt:
+      apt:
         update_cache: true
       when: dl_key is changed or source_list is changed
 
     - name: Install log2ram
-      ansible.builtin.apt:
+      apt:
         pkg:
           - log2ram
           - rsync
       register: pkg
+      notify: Restart log2ram
 
     - name: Set config options
-      ansible.builtin.lineinfile:
+      lineinfile:
         path: /etc/log2ram.conf
         regexp: "{{ item.regexp }}"
         line: "{{ item.line }}"
@@ -66,10 +69,11 @@
         - {regexp: '^ZL2R=(.*)$', line: 'ZL2R={{ log2ram_use_z2lr|lower }}'}
         - {regexp: '^COMP_ALG=(.*)$', line: 'COMP_ALG={{ log2ram_comp_alg }}'}
         - {regexp: '^LOG_DISK_SIZE=(.*)$', line: 'LOG_DISK_SIZE={{ log2ram_log_disk_size }}'}
-      register: config
+      notify: Restart log2ram
 
-    - name: Start log2ram service
-      ansible.builtin.systemd:
-        state: restarted
+
+  handlers:
+    - name: Restart log2ram
+      systemd:
         name: log2ram
-      when: config is changed or pkg is changed
+        state: restarted
