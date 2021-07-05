@@ -15,7 +15,6 @@
     apt_sources_file: log2ram.list
 
     log2ram_size: 32M
-    log2ram_use_rsync: true
     log2ram_path_disk: /var/log
     log2ram_use_z2lr: true
     log2ram_comp_alg: lz4
@@ -52,7 +51,6 @@
       apt:
         pkg:
           - log2ram
-          - rsync
       register: pkg
       notify: Restart log2ram
 
@@ -64,7 +62,6 @@
         backrefs: true
       loop:
         - {regexp: '^SIZE=(.*)$', line: 'SIZE={{ log2ram_size }}'}
-        - {regexp: '^USE_RSYNC=(.*)$', line: 'USE_RSYNC={{ log2ram_use_rsync|lower }}'}
         - {regexp: '^PATH_DISK=(.*)$', line: 'PATH_DISK="{{ log2ram_path_disk }}"'}
         - {regexp: '^ZL2R=(.*)$', line: 'ZL2R={{ log2ram_use_z2lr|lower }}'}
         - {regexp: '^COMP_ALG=(.*)$', line: 'COMP_ALG={{ log2ram_comp_alg }}'}
