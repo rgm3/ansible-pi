@@ -1,3 +1,7 @@
-alias ll='ls -l'
-alias la='ls -A'
+alias ll='exa -Fl \
+      --color-scale \
+      --group-directories-first \
+      --git'
+alias la='ll -ah'
 alias l='ls -CF'
+alias lt='exa -la --tree --level=2'

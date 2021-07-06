@@ -1,8 +1,9 @@
 ---
 # Tasks for dotfiles
+
 - name: aliases
   become: false
-  copy: dest=/home/pi/.bash_aliases src=bash_aliases
+  copy: dest=/home/pi/.bash_aliases src=bash_aliases force=false
 
 - name: inputrc
   become: false
@@ -13,3 +14,26 @@
     owner: pi
     line: 'set completion-ignore-case on'
     regexp: '^set completion-ignore-case'
+
+- name: copy ripgreprc
+  copy:
+    src: ripgreprc
+    dest: /home/pi/.config/
+    mode: 0640
+    owner: pi
+
+- name: init fasd aliases
+  lineinfile:
+    line: 'eval "$(fasd --init auto)"'
+    path: /home/pi/.bashrc
+    state: present
+
+- name: set exa colors
+  lineinfile:
+    path: /home/pi/.bashrc
+    line: 'export EXA_COLORS="da=38;5;244"'
+    regexp: '.*EXA_COLORS=.*'
+    state: present
+
+- name: root bashrc
+  copy: dest=/root/.bashrc src=bashrc.root owner=root force=true backup=true

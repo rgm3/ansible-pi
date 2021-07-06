@@ -1,50 +1,99 @@
 #!/usr/bin/env ansible-playbook
 ---
 - hosts: all
-  gather_facts: yes
-  become: yes
+  gather_facts: true
+  gather_subset: min
+  become: true
+
 
   vars_files:
     - secrets.yml
+
   vars:
     locale: "en_US.UTF-8"
-    timezone: "US/Central"
+    timezone: "America/Chicago"
+    armhf_arches:
+      - armv7l
     packages_to_install:
       - apt-file
       - augeas-tools
-      - bpython
+      - bpython3
+      - exa
+      - fasd
+      - fd-find
+      - fzf
       - git
+      - hdparm
+      - hexyl
+      - httpie
       - htop
+      - iftop
       - iotop
+      - ipython3
+      - jq
+      - lnav
+      - lshw
       - mlocate
       - mosh
+      - nmap
       - pigpio
       - python-pigpio
       - python-rpi.gpio
+      - ripgrep
       - screen
-      - silversearcher-ag
       - ssh-askpass
       - tmux
       - vim
 
-    update_cache: no
 
   tasks:
-    - name: put wifi config in place
+    - name: configure wifi
       template: src=templates/wpa_supplicant.conf.j2 dest=/etc/wpa_supplicant/wpa_supplicant.conf
       notify: reboot
       when: false
 
-    - name: install raspbian packages
-      apt: pkg={{ packages_to_install }} state=present update_cache={{ update_cache }}
+    - name: install packages
+      apt: pkg={{ packages_to_install }} state=present cache_valid_time=3600
+      tags: apt
+
+    - name: install bat
+      apt: deb=https://github.com/sharkdp/bat/releases/download/v0.18.1/bat_0.18.1_armhf.deb cache_valid_time=3600
+      when: ansible_facts['architecture'] in armhf_arches
+      tags: apt
+
+    - name: link fd
+      file: path=/usr/local/bin/fd src=/usr/bin/fdfind state=link
+
+    - name: apt dist-upgrade
+      apt: autoclean=yes autoremove=yes cache_valid_time=3600 upgrade=dist
+      notify: reboot
+      tags: update, upgrade, apt
 
     - import_tasks: locale.yml
 
     - import_tasks: dotfiles.yml
+      tags: dotfiles
 
     - name: generate ssh keys
-      user: name=pi generate_ssh_key=yes
+      user: name=pi generate_ssh_key=yes ssh_key_type=ed25519
       tags: net, ssh
+
+    - name: copy update file
+      copy:
+        src: aup
+        dest: /usr/local/bin/
+        mode: 0755
+        owner: root
+
+    - name: copy helper scripts
+      copy:
+        src: "{{ item }}"
+        dest: /home/pi/bin/
+        mode: 0750
+        owner: pi
+      loop:
+        - throttled.sh
+
 
   handlers:
     - name: reboot
@@ -52,4 +101,3 @@
       async: 0
       poll: 0
       ignore_errors: true
-

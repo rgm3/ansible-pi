@@ -1,0 +1,17 @@
+# Limit long lines, but still show preview.  Override with -M0
+#--max-columns=150
+#--max-columns-preview
+
+# Add 'web' type
+--type-add
+web:*.{html,css,js}*
+
+# Using glob patterns to include/exclude files or folders
+# --glob=!git/*
+
+# Set the colors
+--colors=match:fg:220
+--colors=path:fg:219
+
+# case insensitive when all lowercase
+--smart-case

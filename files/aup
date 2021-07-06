@@ -1,0 +1,11 @@
+#!/bin/bash -x
+# Fully upgrade Raspberry Pi OS
+
+set -euo pipefail
+IFS=$'\n\t'
+
+export DEBIAN_FRONTEND=noninteractive
+apt update
+apt -y upgrade
+apt -y full-upgrade
+apt --purge -y autoremove
