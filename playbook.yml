@@ -94,6 +94,12 @@
       loop:
         - throttled.sh
 
+    - name: install vcgencmd bash completion
+      copy:
+        src: vcgencmd-completion.bash
+        dest: /usr/share/bash-completion/completions/vcgencmd
+        owner: root
+        mode: 0644
 
   handlers:
     - name: reboot
