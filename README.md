@@ -1,7 +1,7 @@
 Raspberry Pi Basic Setup Playbook
 =================================
 
-A playbook to minimally configure a stock Raspbian Jessie Lite system.
+A playbook to minimally configure a stock Raspberry Pi OS Lite system.
 
 This includes:
 
@@ -15,28 +15,16 @@ Prepare SD card - Headless setup
 ================================
 
 When you can't find your mini HDMI adapter and don't want to drag out your
-USB-Serial console cable then specify network settings directly in the /boot
-partition of the SD card.
+USB-Serial console cable, one can specify network settings directly in the
+`/boot` partition of the SD card.
 
 ```bash
-# change to suit your environment
-BOOTDIR="/mnt/sdcard/boot"
-WIFI_SSID="EXAMPLE-NET"
-WIFI_PASS="EXAMPLE-PASS"
+# This play enables ssh and adds wpa_supplicant.conf to a locally mounted
+# /boot partition
 
-# Enable SSH on first boot.  Your pi may become part of an IoT botnet.
-touch "${BOOTDIR}"/ssh
+# Typical GNU/Linux path
+ansible-playbook -e boot_dir=/mnt/sdcard/boot boot-wifi-setup.yml
 
-# Supply bootstrap wifi information
-# Use wpa_passphrase to generate an encrypted psk, or stick with cleartext
-cat <<EOF > "${BOOTDIR}"/wpa_supplicant.conf
-country=US
-ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-update_config=1
-
-network={
-    ssid="${WIFI_SSID}"
-    psk="${WIFI_PASS}"
-}
-EOF
+# Typical macOS path
+ansible-playbook -e boot_dir=/Volumes/boot boot-wifi-setup.yml
 ```

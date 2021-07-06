@@ -1,0 +1,30 @@
+#!/usr/bin/env ansible-playbook
+# Usage:
+#     ansible-playbook -e boot_dir=/mnt/sdcard/boot boot-wifi-setup.ym
+---
+- hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - secrets.yml
+
+  vars:
+    boot_dir: /Volumes/boot
+    #conf_file: "{{boot_dir}}/config.txt"
+
+  tasks:
+    - name: Validate boot dir
+      stat: path="{{boot_dir}}"
+      register: boot
+      failed_when: not boot.stat.exists
+
+    - name: Create SSH marker file
+      file:
+        path: "{{boot_dir}}/ssh"
+        state: touch
+        modification_time: preserve
+        access_time: preserve
+        mode: 0644
+
+    - name: Install wifi config
+      template: src=wpa_supplicant.conf.j2 dest="{{boot_dir}}/wpa_supplicant.conf"
