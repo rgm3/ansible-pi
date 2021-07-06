@@ -1,0 +1,69 @@
+#!/usr/bin/env ansible-playbook
+# Set up basic VIM configuration if user has not customized it already.
+# Usage: ansible-playbook ./vim-basic.yml
+---
+- hosts: all
+  gather_facts: false
+  become: true
+
+  vars:
+    homedirs:
+      - /home/pi
+      - /root
+
+    # users:
+    #   - pi
+    #   - root
+
+  tasks:
+    # - getent:
+    #     database: passwd
+    # - debug:
+    #     msg: "{{ users
+    #              | zip(users
+    #              | map('extract', ansible_facts.getent_passwd)
+    #              | map(attribute='4')) }}"
+    # - debug:
+    #     msg: "{{ dict(users
+    #                   | zip(users
+    #                         | map('extract', ansible_facts.getent_passwd)
+    #                         | map(attribute='4')
+    #                     )
+    #              ) | dict2items }}"
+
+    - name: Check for existing vim config
+      find:
+        paths: "{{ homedirs }}"
+        file_type: any
+        hidden: true
+        patterns:
+          - '.vim'
+          - '.vimrc'
+      register: find_results
+
+    - name: register directories needing config
+      set_fact:
+        target_dirs: "{{ find_results.files
+        | map(attribute='path')
+        | map('dirname')
+        | unique
+        | symmetric_difference(homedirs) }}"
+
+    - name: lookup dir owner
+      stat:
+        path: "{{ item }}"
+        get_attributes: false
+        get_checksum: false
+        get_mime: false
+      loop: "{{ target_dirs }}"
+      register: dirstats
+
+    - name: copy basic .vimrc
+      copy:
+        src: vimrc.basic
+        dest: "{{ item.path }}/.vimrc"
+        force: false
+        mode: 0644
+        owner: "{{ item.pw_name }}"
+        group: "{{ item.gr_name }}"
+      loop: "{{ dirstats.results | map(attribute='stat') }}"

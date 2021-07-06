@@ -1,0 +1,28 @@
+" Source a global configuration file if available
+if filereadable("/etc/vim/vimrc")
+  source /etc/vim/vimrc
+endif
+
+" load debian defaults
+source $VIMRUNTIME/defaults.vim
+
+" Disable mouse
+set mouse-=a
+
+set showcmd        " Show (partial) command in status line.
+set showmatch      " Show matching brackets.
+set ignorecase     " Do case insensitive matching
+set smartcase      " Do smart case matching
+set incsearch      " Incremental search
+set autowrite      " Automatically save before commands like :next and :make
+set hidden         " Hide buffers when they are abandoned
+set hlsearch       " Highlight all search results
+
+set tabstop=2      " number of visual spaces per TAB
+set shiftwidth=2   " number of spaces for each step of (auto)indent
+set softtabstop=2  " number of spaces in tab when editing
+set expandtab      " tabs are spaces
+set lazyredraw     " redraw less, improves speed
+
+" turn off search highlighting with <CR> (carriage-return)
+" nnoremap <CR> :nohlsearch<CR><CR>
