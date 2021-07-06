@@ -1,8 +1,10 @@
 #!/usr/bin/env ansible-playbook
 ---
 # Configure Raspberry Pi to log to RAM, with occasional SD card sync
-# to reduce SD card writes
+# to reduce SD card writes.
 # See https://github.com/azlux/log2ram
+# Usage:
+#     ansible-playbook -e 'log2ram_log_disk_size=100M' ./install_log2ram.yml
 
 - hosts: all
   gather_facts: true
@@ -51,7 +53,6 @@
       apt:
         pkg:
           - log2ram
-      register: pkg
       notify: Restart log2ram
 
     - name: Set config options
