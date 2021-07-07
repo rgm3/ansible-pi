@@ -56,6 +56,9 @@
       apt: pkg={{ packages_to_install }} state=present cache_valid_time=3600
       tags: apt
 
+      # curl --silent -H "Accept: application/vnd.github.v3+json" \
+      #     "https://api.github.com/repos/sharkdp/bat/releases/latest" \
+      #     | jq '.assets[]? | select(.browser_download_url | endswith("_armhf.deb")) | .browser_download_url'
     - name: install bat
       apt: deb=https://github.com/sharkdp/bat/releases/download/v0.18.1/bat_0.18.1_armhf.deb cache_valid_time=3600
       when: ansible_facts['architecture'] in armhf_arches
