@@ -30,7 +30,13 @@ _vcgencmd() {
     fi
 
     if [[ $args -eq 1 ]]; then
-        mapfile -t COMPREPLY < <( _vcgencmd_commands )
+        case "$prev" in
+            -h|--help)
+                ;;
+            *)
+                mapfile -t COMPREPLY < <( _vcgencmd_commands )
+                ;;
+        esac
         return 0
     fi
 
