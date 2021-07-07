@@ -3,12 +3,12 @@
 _vcgencmd_commands()
 {
     local commands fallback re
+    commands="$(/usr/bin/vcgencmd commands 2> /dev/null)"
     fallback="codec_enabled commands display_power get_camera get_config
         get_lcd_info get_mem get_throttled measure_temp measure_volts
         mem_oom version"
-
-    commands="$(/usr/bin/vcgencmd commands 2> /dev/null)"
     re='commands="(.*)"'
+
     if [[ $commands =~ $re ]]; then
         commands="${BASH_REMATCH[1]}"
         commands="${commands//,}"
@@ -19,39 +19,22 @@ _vcgencmd_commands()
     compgen -W "$commands" -- "$cur"
 }
 
-# True when first parameter is equal to the current word
-# position, not counting leading optional arguments.
-_vcgencmd_cword_ignore_optional_equals() {
-   local num
-   num="$1"
-
-   if [[ ${COMP_WORDS[1]} == '-t' ]]; then
-       (( num == COMP_CWORD - 1 ))
-       return
-   fi
-
-   (( num == COMP_CWORD ))
-}
-
 _vcgencmd() {
-    local cur prev cword opts
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    cword="${COMP_CWORD}"
-    opts=""
+    local cur prev cword opts='' args
+    _init_completion -n ':' || return
+    _count_args ':'
 
     if [[ $cword -eq 1 && $cur == -* ]] ; then
         mapfile -t COMPREPLY < <( compgen -W '-t -h --help' -- "$cur" )
         return 0
     fi
 
-    if _vcgencmd_cword_ignore_optional_equals 1; then
+    if [[ $args -eq 1 ]]; then
         mapfile -t COMPREPLY < <( _vcgencmd_commands )
         return 0
     fi
 
-    if _vcgencmd_cword_ignore_optional_equals 2; then
+    if [[ $args -eq 2 ]]; then
         case "$prev" in
             codec_enabled)
                 opts='AGIF FLAC H263 H264 MJPA MJPB MJPG MPG2 MPG4 MVC0 PCM
@@ -80,7 +63,7 @@ _vcgencmd() {
         esac
     fi
 
-    if _vcgencmd_cword_ignore_optional_equals 3; then
+    if [[ $args -eq 3 ]]; then
         case "${COMP_WORDS[COMP_CWORD-2]}" in
             display_power)
                 case "$prev" in
@@ -94,6 +77,7 @@ _vcgencmd() {
     fi
 
     [[ -n $opts ]] && mapfile -t COMPREPLY < <( compgen -W "$opts" -- "$cur" )
+    [[ $prev == "get_config" ]] && __ltrim_colon_completions "$cur"
 
     return 0
 } &&
