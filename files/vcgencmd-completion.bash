@@ -20,7 +20,7 @@ _vcgencmd_commands()
 }
 
 _vcgencmd() {
-    local cur prev cword opts='' args
+    local cur prev cword words opts='' args
     _init_completion -n ':' || return
     _count_args ':'
 
@@ -33,8 +33,10 @@ _vcgencmd() {
         case "$prev" in
             -h|--help)
                 ;;
-            *)
+            -t|vcgencmd)
                 mapfile -t COMPREPLY < <( _vcgencmd_commands )
+                ;;
+            -*)
                 ;;
         esac
         return 0
@@ -69,8 +71,9 @@ _vcgencmd() {
         esac
     fi
 
-    if [[ $args -eq 3 ]]; then
-        case "${COMP_WORDS[COMP_CWORD-2]}" in
+    # The "-1" argument looks like an option, so _count_args excludes it
+    if [[ $args -eq 3 ]] || [[ ${words[cword - 2]} == "display_power" ]]; then
+        case "${words[cword - 2]}" in
             display_power)
                 case "$prev" in
                     0|1|-1) opts='0 1 2 3 7' ;;
