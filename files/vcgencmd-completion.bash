@@ -62,28 +62,34 @@ _vcgencmd() {
                 opts+=" $("$1" get_config str | command sed -e 's/=.*$//')"
                 opts+=" $("$1" get_config int | command sed -e 's/=.*$//')"
                 ;;
-            vcos)
-                opts='version log'
-                ;;
-            display_power)
-                opts='0 1 -1'
-                ;;
         esac
     fi
 
-    # The "-1" argument looks like an option, so _count_args excludes it
-    if [[ $args -eq 3 ]] || [[ ${words[cword - 2]} == "display_power" ]]; then
-        case "${words[cword - 2]}" in
-            display_power)
-                case "$prev" in
-                    0|1|-1) opts='0 1 2 3 7' ;;
-                esac
-                ;;
-            vcos)
-                [[ $prev == "log" ]] && opts='status'
-                ;;
-        esac
-    fi
+    # since "-1" argument looks like an option, can't use if $args -eq 3
+    local arg
+    _get_first_arg
+    case "$arg" in
+        display_power)
+            case "$prev" in
+                display_power)
+                    opts='0 1 -1'
+                    ;;
+                0|1|-1)
+                    opts='0 1 2 3 7'
+                    ;;
+            esac
+            ;;
+        vcos)
+            case "$prev" in
+                vcos)
+                    opts='version log'
+                    ;;
+                log)
+                    opts='status'
+                    ;;
+            esac
+            ;;
+    esac
 
     [[ -n $opts ]] && mapfile -t COMPREPLY < <( compgen -W "$opts" -- "$cur" )
     [[ $prev == "get_config" ]] && __ltrim_colon_completions "$cur"

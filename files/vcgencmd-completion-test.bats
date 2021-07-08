@@ -126,13 +126,24 @@ complete_command() {
 }
 
 @test "display_power [0, 1, -1] -> 0 1 2 3 7" {
-  local powers="0 1 2 3 7"
+  local display_nums="0 1 2 3 7"
   complete_command "vcgencmd display_power 0 "
-  [[ "${COMPREPLY[*]}" == "$powers" ]]
+  [[ "${COMPREPLY[*]}" == "$display_nums" ]]
   complete_command "vcgencmd display_power 1 "
-  [[ "${COMPREPLY[*]}" == "$powers" ]]
+  [[ "${COMPREPLY[*]}" == "$display_nums" ]]
   complete_command "vcgencmd display_power -1 "
-  [[ "${COMPREPLY[*]}" == "$powers" ]]
+  [[ "${COMPREPLY[*]}" == "$display_nums" ]]
+}
+
+@test "BADARG display_power -1 -> (nothing)" {
+  complete_command "vcgencmd BADARG display_power -1 "
+  echo "${COMPREPLY[*]}"
+  [[ "${COMPREPLY[*]}" == "" ]]
+}
+
+@test "-t display_power -1 -> 0 1 2 3 7" {
+  complete_command "vcgencmd -t display_power -1 "
+  [[ "${COMPREPLY[*]}" == "0 1 2 3 7" ]]
 }
 
 @test "vcos log -> status" {
