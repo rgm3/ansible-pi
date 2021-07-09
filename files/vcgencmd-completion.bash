@@ -19,10 +19,34 @@ _vcgencmd_commands()
     compgen -W "$commands" -- "$cur"
 }
 
+# This function counts the number of args, excluding options,
+# providing exceptions for option-like arguments.
+# @param $1 chars  Characters out of $COMP_WORDBREAKS which should
+#     NOT be considered word breaks. See __reassemble_comp_words_by_ref.
+# @param $2 non_opt_args arguments that look like options, but aren't
+_vcgencmd_count_args()
+{
+    local i cword words non_opt_args
+    __reassemble_comp_words_by_ref "$1" words cword
+
+    args=1
+    non_opt_args="$2"
+
+    for i in "${words[@]:1:cword-1}"; do
+        if [[ "$i" != -* ]]; then
+            args=$((args+1))
+        else
+            for a in $non_opt_args; do
+              [[ "$i" == "$a" ]] && args=$((args+1))
+            done
+        fi
+    done
+}
+
 _vcgencmd() {
     local cur prev cword words opts='' args
     _init_completion -n ':' || return
-    _count_args ':'
+    _vcgencmd_count_args ':' '-1'
 
     if [[ $cword -eq 1 && $cur == -* ]] ; then
         mapfile -t COMPREPLY < <( compgen -W '-t -h --help' -- "$cur" )
@@ -62,34 +86,27 @@ _vcgencmd() {
                 opts+=" $("$1" get_config str | command sed -e 's/=.*$//')"
                 opts+=" $("$1" get_config int | command sed -e 's/=.*$//')"
                 ;;
+            display_power)
+                opts='0 1 -1'
+                ;;
+            vcos)
+                opts='log version'
+                ;;
         esac
     fi
 
-    # since "-1" argument looks like an option, can't use if $args -eq 3
-    local arg
-    _get_first_arg
-    case "$arg" in
-        display_power)
-            case "$prev" in
-                display_power)
-                    opts='0 1 -1'
-                    ;;
-                0|1|-1)
-                    opts='0 1 2 3 7'
-                    ;;
-            esac
-            ;;
-        vcos)
-            case "$prev" in
-                vcos)
-                    opts='version log'
-                    ;;
-                log)
-                    opts='status'
-                    ;;
-            esac
-            ;;
-    esac
+    if [[ $args -eq 3 ]]; then
+        case "$prev" in
+            0|1|-1)
+                opts='0 1 2 3 7'
+                ;;
+        esac
+        case "$prev" in
+            log)
+                opts='status'
+                ;;
+        esac
+    fi
 
     [[ -n $opts ]] && mapfile -t COMPREPLY < <( compgen -W "$opts" -- "$cur" )
     [[ $prev == "get_config" ]] && __ltrim_colon_completions "$cur"

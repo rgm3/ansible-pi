@@ -125,18 +125,28 @@ complete_command() {
   [[ "${COMPREPLY[*]}" == "0 1 -1" ]]
 }
 
-@test "display_power [0, 1, -1] -> 0 1 2 3 7" {
+@test "display_power [0, 1] -> 0 1 2 3 7" {
   local display_nums="0 1 2 3 7"
   complete_command "vcgencmd display_power 0 "
   [[ "${COMPREPLY[*]}" == "$display_nums" ]]
   complete_command "vcgencmd display_power 1 "
   [[ "${COMPREPLY[*]}" == "$display_nums" ]]
+}
+
+@test "display_power -1 -> 0 1 2 3 7" {
+  local display_nums="0 1 2 3 7"
   complete_command "vcgencmd display_power -1 "
   [[ "${COMPREPLY[*]}" == "$display_nums" ]]
 }
 
 @test "BADARG display_power -1 -> (nothing)" {
   complete_command "vcgencmd BADARG display_power -1 "
+  echo "${COMPREPLY[*]}"
+  [[ "${COMPREPLY[*]}" == "" ]]
+}
+
+@test "display_power BADARG -1 -> (nothing)" {
+  complete_command "vcgencmd display_power BADARG -1 "
   echo "${COMPREPLY[*]}"
   [[ "${COMPREPLY[*]}" == "" ]]
 }
@@ -152,6 +162,6 @@ complete_command() {
 }
 
 @test "-t vcos log -> status" {
-  complete_command "vcgencmd vcos log "
+  complete_command "vcgencmd -t vcos log "
   [[ "${COMPREPLY[*]}" == "status" ]]
 }
