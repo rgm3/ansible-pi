@@ -1,9 +1,10 @@
 #!/usr/bin/env bats
-# Test suite for vcgencmd command completion
+# Integration tests for vcgencmd command completion.
+# Runs on Raspberry Pi, requires bats-core package.
+
 load /usr/share/bash-completion/bash_completion || true
 load /usr/share/bash-completion/completions/vcgencmd
 
-#DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
 
 complete_command() {
   local cmd="$*"
@@ -20,21 +21,27 @@ complete_command() {
   # current pointer position in line
   COMP_POINT="${#cmd}"
 
-  #echo >&3
-  #echo "COMP_LINE=${COMP_LINE}\$" >&3
-  #echo "COMP_WORDS=${COMP_WORDS[@]} length ${#COMP_WORDS[@]}" >&3
-  #echo "COMP_CWORD=${COMP_CWORD}" >&3
-  #echo "COMP_POINT=${COMP_POINT}" >&3
-
   # name of completion function
   complete_func=$(complete -p "${COMP_WORDS[0]}" | sed 's/.*-F \([^ ]*\) .*/\1/')
   [[ -n $complete_func ]]
 
-  # Set the COMPREPLY array
+  # Run completion function. Sets the COMPREPLY array.
   $complete_func "${COMP_WORDS[0]}" || true
 
-  #echo "reply num=${#COMPREPLY[@]}" >&3
-  #echo "opts=${COMPREPLY[@]}" >&3
+  if [[ $DEBUG_VCGENCMD_TEST ]]; then
+    echo >&3
+    echo "COMP_LINE='${COMP_LINE}'" >&3
+    echo "COMP_WORDS='${COMP_WORDS[*]}'" >&3
+    echo "length COMP_WORDS = ${#COMP_WORDS[@]}" >&3
+    echo "COMP_CWORD=${COMP_CWORD}" >&3
+    echo "COMP_POINT=${COMP_POINT}" >&3
+    echo "COMPREPLY=${COMPREPLY[*]}" >&3
+    echo "length COMPREPLY=${#COMPREPLY[@]}" >&3
+  fi
+}
+
+is_pi4() {
+  grep -qE '^Model.* Raspberry Pi 4' /proc/cpuinfo
 }
 
 @test "vcgencmd - -> -t -h --help" {
@@ -105,9 +112,29 @@ complete_command() {
   [[ "${COMPREPLY[*]}" == "0 1" ]]
 }
 
+# Pi 4B has two hdmi pixel freq limits 0 and 1, Pi 2 and 3 just have one
 @test "get_config hdmi_pixel_freq_li -> hdmi_pixel_freq_limit:0" {
+  if is_pi4; then
+    skip "test only valid with 1 hdmi (earlier pi models)"
+  fi
   complete_command "vcgencmd get_config hdmi_pixel_freq_li"
   [[ "${COMPREPLY[*]}" == "hdmi_pixel_freq_limit:0" ]]
+}
+
+@test "get_config hdmi_pixel_freq_li -> hdmi_pixel_freq_limit:" {
+  if ! is_pi4; then
+    skip "test requires Pi 4 with 2 hdmi outputs"
+  fi
+  complete_command "vcgencmd get_config hdmi_pixel_freq_li"
+  [[ "${COMPREPLY[*]}" == "hdmi_pixel_freq_limit:0 hdmi_pixel_freq_limit:1" ]]
+}
+
+@test "get_config hdmi_pixel_freq_limit: -> 0 1" {
+  if ! is_pi4; then
+    skip "test requires Pi 4 with 2 hdmi outputs"
+  fi
+  complete_command "vcgencmd get_config hdmi_pixel_freq_limit:"
+  [[ "${COMPREPLY[*]}" == "0 1" ]]
 }
 
 @test "vcos -> version log" {
@@ -164,4 +191,9 @@ complete_command() {
 @test "-t vcos log -> status" {
   complete_command "vcgencmd -t vcos log "
   [[ "${COMPREPLY[*]}" == "status" ]]
+}
+
+@test "vcos 0 -> (nothing)" {
+  complete_command "vcgencmd vcos 0 "
+  [[ "${#COMPREPLY[@]}" -eq 0 ]]
 }

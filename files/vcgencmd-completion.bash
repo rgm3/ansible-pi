@@ -96,14 +96,20 @@ _vcgencmd() {
     fi
 
     if [[ $args -eq 3 ]]; then
-        case "$prev" in
-            0|1|-1)
-                opts='0 1 2 3 7'
+        case "${words[cword - 2]}" in
+            display_power)
+                case "$prev" in
+                    0|1|-1)
+                        opts='0 1 2 3 7'
+                        ;;
+                esac
                 ;;
-        esac
-        case "$prev" in
-            log)
-                opts='status'
+            vcos)
+                case "$prev" in
+                    log)
+                        opts='status'
+                        ;;
+                esac
                 ;;
         esac
     fi
